@@ -31,7 +31,7 @@ CTxMemPool mempool;
 unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
-uint256 hashGenesisBlock("0x12a765e31ffd4059bada1e25190f6e98c99d9714d334efa41a195a7e7e04bfe2");
+uint256 hashGenesisBlock("0xe2819c255ab4b5634bf34422b09180006dd3f9672526c1f5efe725610b4a97b3");
 static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // Woodcoin: starting difficulty is 1 / 2^12
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -2723,7 +2723,7 @@ bool LoadBlockIndex()
         pchMessageStart[1] = 0xc1;
         pchMessageStart[2] = 0xb7;
         pchMessageStart[3] = 0xdc;
-        hashGenesisBlock = uint256("0xf5ae71e26c74beacc88382716aced69cddf3dffff24f384e1808905e0188f68f");
+        hashGenesisBlock = uint256("0x4fad16fa544ffba9f206c8d25b2602d954fd45eee504124c44eca00801f27fd9");
     }
 
     //
@@ -2749,14 +2749,14 @@ bool InitBlockIndex() {
     // Only add the genesis block if not reindexing (in which case we reuse the one already on disk)
     if (!fReindex) {
         // Genesis Block:
-        // CBlock(hash=12a765e31ffd4059bada, PoW=0000050c34a64b415b6b, ver=1, hashPrevBlock=00000000000000000000, hashMerkleRoot=97ddfbbae6, nTime=1317972665, nBits=1e0ffff0, nNonce=2084524493, vtx=1)
-        //   CTransaction(hash=97ddfbbae6, ver=1, vin.size=1, vout.size=1, nLockTime=0)
-        //     CTxIn(COutPoint(0000000000, -1), coinbase 04ffff001d0104404e592054696d65732030352f4f63742f32303131205374657665204a6f62732c204170706c65e280997320566973696f6e6172792c2044696573206174203536)
-        //     CTxOut(nValue=50.00000000, scriptPubKey=040184710fa689ad5023690c80f3a4)
-        //   vMerkleTree: 97ddfbbae6
-
+        // CBlock(hash=e055dd79bcb7f97d8cebd12efe00e44afe899d01674d57ac5a60004b558c2e03, input=0100000000000000000000000000000000000000000000000000000000000000000000004e175aaebbb98aa9bb78c8e528405e37599d9411dfa844777b6e721c0ee4c12d02a9c7520000000000000000, PoW=6dbc45d5fd1cb4e7ae9afe4333e75b4f98c8aff9f531944bda4af8a2156c7d72, ver=1, hashPrevBlock=0000000000000000000000000000000000000000000000000000000000000000, hashMerkleRoot=2dc1e40e1c726e7b7744a8df11949d59375e4028e5c878bba98ab9bbae5a174e, nTime=1388816642, nBits=00000000, nNonce=0, vtx=1)
+				//	 CTransaction(hash=2dc1e40e1c726e7b7744a8df11949d59375e4028e5c878bba98ab9bbae5a174e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+    		//		 CTxIn(COutPoint(0000000000000000000000000000000000000000000000000000000000000000, 4294967295), coinbase 04ffff001d0104394a616e2d30332d32303134205068696c20457665726c79206f662074686520457665726c792042726f74686572732064696573206174203734)
+    		//		 CTxOut(nValue=50.00000000, scriptPubKey=040184710fa689ad5023690c80f3a4)
+  			//	 vMerkleTree: 2dc1e40e1c726e7b7744a8df11949d59375e4028e5c878bba98ab9bbae5a174e
+        
         // Genesis block
-        const char* pszTimestamp = "03/Jan/2014 Phil Everly of the Everly Brothers dies at 74";
+        const char* pszTimestamp = "Jan-03-2014 Phil Everly, Half of Pioneer Rock Duo, Dies at 74";
         CTransaction txNew;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
@@ -2768,14 +2768,14 @@ bool InitBlockIndex() {
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1388808026;
+        block.nTime    = 1388826887;
         block.nBits    = 0x1e0ffff0;
-        block.nNonce   = 2084524493;
+        block.nNonce   = 243030;
 
         if (fTestNet)
         {
-            block.nTime    = 1388808026;
-            block.nNonce   = 385270584;
+            block.nTime    = 1388826887;
+            block.nNonce   = 0;
         }
 
         //// debug print
@@ -2783,7 +2783,58 @@ bool InitBlockIndex() {
         printf("%s\n", hash.ToString().c_str());
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
-        assert(block.hashMerkleRoot == uint256("0x97ddfbbae6be97fd6cdf3e7ca13232a3afff2353e29badfab7f73011edd4ced9"));
+        assert(block.hashMerkleRoot == uint256("0x0e708114e97bb4b687b120a28e10893e7574059f4bbc8f93f82d3b816b11bc36"));
+        
+        
+        
+        // If genesis block hash does not match, then generate new genesis hash.
+        if (true && block.GetHash() != hashGenesisBlock)
+        {
+            printf("Searching for genesis block...\n");
+            // This will figure out a valid hash and Nonce if you're
+            // creating a different genesis block:
+            uint256 hashTarget = CBigNum().SetCompact(block.nBits).getuint256();
+            uint256 thash;
+            char scratchpad[SCRYPT_SCRATCHPAD_SIZE];
+ 
+            loop
+            {
+							#if defined(USE_SSE2)
+                // Detection would work, but in cases where we KNOW it always has SSE2,
+                // it is faster to use directly than to use a function pointer or conditional.
+							#if defined(_M_X64) || defined(__x86_64__) || defined(_M_AMD64) || (defined(MAC_OSX) && defined(__i386__))
+                // Always SSE2: x86_64 or Intel MacOS X
+                scrypt_1024_1_1_256_sp_sse2(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+							#else
+                // Detect SSE2: 32bit x86 Linux or Windows
+                scrypt_1024_1_1_256_sp(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+							#endif
+							#else
+                // Generic scrypt
+                scrypt_1024_1_1_256_sp_generic(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+							#endif
+                if (thash <= hashTarget)
+                    break;
+                if ((block.nNonce & 0xFFF) == 0)
+                {
+                    printf("nonce %08X: hash = %s (target = %s)\n", block.nNonce, thash.ToString().c_str(), hashTarget.ToString().c_str());
+                }
+                ++block.nNonce;
+                if (block.nNonce == 0)
+                {
+                    printf("NONCE WRAPPED, incrementing time\n");
+                    ++block.nTime;
+                }
+            }
+            printf("block.nTime = %u \n", block.nTime);
+            printf("block.nNonce = %u \n", block.nNonce);
+            printf("block.GetHash = %s\n", block.GetHash().ToString().c_str());
+        }
+        
+        
+      
+        // https://bitcointalk.org/index.php?topic=391983.msg4223449#msg4223449
+        
         block.print();
         assert(hash == hashGenesisBlock);
 
